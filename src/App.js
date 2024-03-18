@@ -35,7 +35,7 @@ function App() {
   }, [])
 
   return (
-    <div>
+    <div className='App'>
       <h1>QUIZ APP</h1>
       {questionData.length && <QuestionCard questionData={questionData} setQuestionData={setQuestionData} currentQuestionIndex={currentQuestionIndex} setCurrentQuestionIndex={setCurrentQuestionIndex} />}
     </div>
