@@ -1,45 +1,70 @@
-import logo from './logo.svg';
-import './App.css';
-import { useEffect, useState } from 'react';
-import QuestionCard from './Components/QuestionCard';
 
-function App() {
+import QuestionCard from "./Components/QuestionCard";
+import "../src/App.css";
 
-  const [questionData, setQuestionData] = useState([]);
+import React, { useEffect, useState } from "react";
+
+const App = () => {
+
+  const [questionData, setQuestionData] = useState(() => {
+    const savedData = localStorage.getItem("quiz_questions");
+    const parsedData = JSON.parse(savedData);
+    return parsedData || [];
+  });
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [score, setScore] = useState(0);
 
   useEffect(() => {
-    // API Call
-    const local_data = localStorage.getItem("data");
+    const url = "https://opentdb.com/api.php?amount=10";
+    if (questionData.length === 0) {
+      fetch(url)
+        .then((res) => res.json())
+        .then((data) => {
+          const questionArray = data.results.map((elem) => {
+            const obj = {
+              question: elem.question,
+              options: [...elem.incorrect_answers, elem.correct_answer],
+              correct_answer: elem.correct_answer,
+              score: 0,
+            };
+            return obj;
+          });
 
-    if (local_data) {
-      setQuestionData(JSON.parse(local_data))
-      return
+          setQuestionData(questionArray);
+          localStorage.setItem("quiz_questions", JSON.stringify(questionArray));
+        });
     }
+  });
 
-    fetch("https://opentdb.com/api.php?amount=10&type=multiple").then(res => res.json()).then(data => {
-      const questions = data.results.map((que, index) => {
-        return {
-          question_no: index + 1,
-          question: que.question,
-          options: [...que.incorrect_answers, que.correct_answer],
-          correct_answer: que.correct_answer,
-          status: 0 // 0 - unattempted, 1 - attempeted, 2 - Right Answer, 3 - Wrong Answer
-        }
-      })
-      setQuestionData(questions)
-      localStorage.setItem("data", JSON.stringify(questions))
-    })
 
-  }, [])
+
+  function restartHandler() {
+    setScore(0);
+    setCurrentQuestionIndex(0);
+  }
 
   return (
-    <div className='App'>
-      <h1>QUIZ APP</h1>
-      {questionData.length && <QuestionCard questionData={questionData} setQuestionData={setQuestionData} currentQuestionIndex={currentQuestionIndex} setCurrentQuestionIndex={setCurrentQuestionIndex} />}
+    <div id="container">
+      <h1>Quiz App</h1>
+      {questionData.length > 0 && currentQuestionIndex < questionData.length ? (
+        <QuestionCard
+          question={questionData[currentQuestionIndex].question}
+          options={questionData[currentQuestionIndex].options}
+          correct_answer={questionData[currentQuestionIndex].correct_answer}
+          currentQuestionIndex={currentQuestionIndex}
+          setCurrentQuestionIndex={setCurrentQuestionIndex} score={score} setScore={setScore}
+        />
+      ) : (
+        currentQuestionIndex > 0 ?
+          <div id="quiz_end_card">
+            <p>Quiz Ended</p>
+            <p>Your Score :{score}</p>
+            <button onClick={restartHandler} className="btn">Restart</button>
+          </div> : "Loading..."
+      )}
     </div>
   );
-}
+};
 
 export default App;

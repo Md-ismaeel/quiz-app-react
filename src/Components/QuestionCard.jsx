@@ -1,92 +1,71 @@
-import React, { useState, useEffect } from "react";
 
-const PrevBTN = ({ onClick }) => {
-  return (
-    <div>
-      <button onClick={onClick}>Prev</button>
-    </div>
-  );
-};
+import '../Components/Card.css'
+import React, { useEffect, useState } from 'react'
 
-const NextBTN = ({ onClick }) => {
-  return (
-    <div>
-      <button onClick={onClick}>Next</button>
-    </div>
-  );
-};
+const QuestionCard = ({ currentQuestionIndex, setCurrentQuestionIndex, question, options, correct_answer, score, setScore }) => {
 
-const SubmitBTN = ({ onClick }) => {
-  return (
-    <div>
-      <button onClick={onClick}>Submit QUIZ</button>
-    </div>
-  );
-};
-
-const QuestionCart = ({
-  questionData,
-  setQuestionData,
-  currentQuestionIndex,
-  setCurrentQuestionIndex,
-}) => {
-  const initialTimers = questionData.map(() => 10); // Initialize timers array with 10 seconds for each question
-  const [timers, setTimers] = useState(initialTimers);
-  const [selectedOption, setSelectedOption] = useState(null); // State to store selected option
+  const [timeLeft, setTimeLeft] = useState(10);
 
   useEffect(() => {
-    const countdown = setTimeout(() => {
-      const updatedTimers = timers.map((time, index) => {
-        if (index === currentQuestionIndex && time > 0) {
-          return time - 1;
+
+    const timer = setInterval(() => {
+      console.log("timer running")
+      setTimeLeft((prevState) => {
+        const updatedTime = prevState - 1;
+        if (updatedTime === 0) {
+          console.log("clearing")
+          clearInterval(timer);
+          skipHandler();
         }
-        return time;
-      });
-      setTimers(updatedTimers);
-    }, 1000);
+        return updatedTime;
+      })
+    }, 1000)
 
-    return () => clearTimeout(countdown);
-  }, [currentQuestionIndex, timers]);
+    return (() => {
+      clearInterval(timer);
+    })
 
-  const handleNextQuestion = () => {
-    setSelectedOption(null); // Reset selected option
-    setCurrentQuestionIndex((prevValue) => prevValue + 1);
-  };
 
-  const handlePrevQuestion = () => {
-    setSelectedOption(null); // Reset selected option
-    setCurrentQuestionIndex((prevValue) => prevValue - 1);
-  };
+  }, [currentQuestionIndex])
 
-  const handleOptionSelect = (option) => {
-    setSelectedOption(option);
-  };
+  function skipHandler() {
+
+    setTimeLeft(10)
+
+    setCurrentQuestionIndex((prevState) => {
+      return prevState + 1;
+    })
+  }
+
+  function answerHandler(e) {
+
+    if (e.target.innerText === correct_answer) {
+      setScore((prevState) => {
+        return prevState + 1;
+      })
+    }
+
+    skipHandler()
+
+  }
 
   return (
-    <div>
-      <h4>
-        Question {questionData[currentQuestionIndex].question_no}:{" "}
-        {questionData[currentQuestionIndex].question}
-      </h4>
-      <p>Time Remaining: {timers[currentQuestionIndex]} seconds</p>
-      {questionData[currentQuestionIndex]?.options?.map((option, index) => (
-        <div key={index}>
-          <button onClick={() => handleOptionSelect(option)}>
-            {option}
-          </button>
-        </div>
-      ))}
-      <p>Selected Option: {selectedOption}</p>
-      {currentQuestionIndex !== 0 && (
-        <PrevBTN onClick={handlePrevQuestion} />
-      )}
-      {currentQuestionIndex === questionData.length - 1 ? (
-        <SubmitBTN onClick={() => { }} />
-      ) : (
-        <NextBTN onClick={handleNextQuestion} />
-      )}
+    <div className='question_card'>
+      <h4>Question {currentQuestionIndex + 1}</h4>
+      <p>Question : {question} </p>
+      <div className='option-btns'>
+        {
+          options.map((elem, index) => {
+            return (
+              <button className='btn' onClick={answerHandler} key={index}>{elem}</button>
+            )
+          })
+        }
+      </div>
+      <p>Time left : {timeLeft}</p>
+      <button onClick={skipHandler} className='btn skip_btn'>Skip Question</button>
     </div>
-  );
-};
+  )
+}
 
-export default QuestionCart;
+export default QuestionCard
